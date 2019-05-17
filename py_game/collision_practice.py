@@ -4,6 +4,10 @@ import random
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
+screen_width = 700
+screen_height = 400
+block_width = 20
+block_height = 15
 
 
 def draw_screen():
@@ -23,7 +27,7 @@ def generate_rand_move_block(num):
         all_sprites_list.add(block)
 
 
-def check_collide(player, blocks):
+def update_player_loc(player):
 
     pos = pygame.mouse.get_pos()
 
@@ -32,16 +36,15 @@ def check_collide(player, blocks):
     if 0 <= pos[1] <= screen_height - block_height:
         player.rect.y = pos[1]
 
-    return pygame.sprite.spritecollide(player, blocks, True)
-
 
 class Block(pygame.sprite.Sprite):
 
     def __init__(self, color, width, height):
+        super().__init__()
+
         self.color = color
         self.width = width
         self.height = height
-        super().__init__()
 
         self.image = pygame.Surface([width, height])
         self.image.fill(color)
@@ -55,7 +58,7 @@ class BlockMoveRandom(Block):
 
         self.rect.x = random.randrange(screen_width)
         self.rect.y = random.randrange(screen_height)
-        self.speed = pygame.math.Vector2(5, 0).rotate(random.randrange(360))
+        self.speed = pygame.math.Vector2(2, 3).rotate(random.randrange(360))
 
     def update(self):
         self.rect.x += self.speed[0]
@@ -68,13 +71,6 @@ class BlockMoveRandom(Block):
 
 
 pygame.init()
-
-screen_width = 700
-screen_height = 400
-block_width = 20
-block_height = 15
-
-
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 block_list = pygame.sprite.Group()
@@ -93,14 +89,14 @@ while not done:
         if event.type == pygame.QUIT:
             done = True
 
-    check_collide(player, block_list)
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            blocks_hit_list = pygame.sprite.spritecollide(player, block_list, True)
 
-    blocks_hit_list = check_collide(player, block_list)
+            for block in blocks_hit_list:
+                score += 1
+                print("Your scores: %s." % score)
 
-    for block in blocks_hit_list:
-        score += 1
-        print("Your scores: %s." % score)
-
+    update_player_loc(player)
     block_list.update()
     draw_screen()
 
