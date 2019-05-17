@@ -5,7 +5,7 @@ SCREENHEIGHT = 480
 WHITE = (255, 255, 255)
 GRAY = (230, 230, 230)
 
-win = pygame.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
+screen = pygame.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
 pygame.display.set_caption("Jumping rectangle")
 
 bg = pygame.image.load('img/bg.jpg')
@@ -22,9 +22,9 @@ jumpCount = 10
 
 def redraw_game_window():
 
-    win.fill(WHITE)
-    win.blit(bg, (0, 0))
-    pygame.draw.rect(win, GRAY, (x, y, width, height))
+    screen.fill(WHITE)
+    screen.blit(bg, (0, 0))
+    pygame.draw.rect(screen, GRAY, (x, y, width, height))
     pygame.display.update()
 
 

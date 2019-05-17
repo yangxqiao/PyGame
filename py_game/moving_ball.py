@@ -6,7 +6,7 @@ size = width, height = 900, 700
 speed = [4, 4]
 white = (245, 255, 250)
 
-win = pygame.display.set_mode(size)
+screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Moving ball")
 
 ball = pygame.image.load("img/intro_ball.jpg")
@@ -34,8 +34,6 @@ while run:
     if ball_rect.top < 0 or ball_rect.bottom > height:
         speed[1] = -speed[1]
 
-    win.fill(white)
-    win.blit(ball, ball_rect)
+    screen.fill(white)
+    screen.blit(ball, ball_rect)
     pygame.display.update()
-
-
