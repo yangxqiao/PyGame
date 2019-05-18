@@ -11,6 +11,14 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 
+block_image = {"img/toilet_paper.jpg": 1,
+               "img/water_bottle.jpg": 5,
+               "img/battery.jpg": -10}
+
+# block_image = {"img/coin.jpg": 1,
+#                "img/silver_coin.jpg": 5,
+#                "img/grenade.jpg": -10}
+
 
 def draw_screen():
     screen.fill(WHITE)
@@ -22,25 +30,39 @@ def draw_screen():
     pygame.display.flip()
 
 
-def generate_rand_move_block(num):
+def generate_rand_falling_block(num, time):
 
-    for i in range(num):
-        block = FallingCoin()
+    if time == 10:
+        for i in range(num):
+            image = random.choice(list(block_image.keys()))
+            score = block_image[image]
+            falling_block = FallingCoin(image, score)
 
-        coin_list.add(block)
-        all_sprites_list.add(block)
+            coin_list.add(falling_block)
+            all_sprites_list.add(falling_block)
+
+        time = 0
+
+    return time
 
 
-class Player(pygame.sprite.Sprite):
+class Block(pygame.sprite.Sprite):
 
-    def __init__(self, pos, vel):
+    def __init__(self, image):
         super().__init__()
 
-        self.image = pygame.image.load("img/basket.jpg").convert()
+        self.image = pygame.image.load(image).convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
 
-        self.rect = self.image.get_rect()
+    def update_position(self):
+        raise NotImplementedError("This function is meant to be implemented in a subclass.")
+
+
+class Player(Block):
+
+    def __init__(self, image, pos, vel):
+        Block.__init__(self, image)
 
         self.pos = pos
         self.rect.x = pos[0]
@@ -78,17 +100,15 @@ class Player(pygame.sprite.Sprite):
                 self.jump_count = 10
 
 
-class FallingCoin(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
+class FallingCoin(Block):
 
-        self.image = pygame.image.load("img/coin.jpg").convert()
-        self.image.set_colorkey(WHITE)
-        self.rect = self.image.get_rect()
+    def __init__(self, image, score):
+        Block.__init__(self, image)
 
         self.rect.x = random.randrange(SCREEN_WIDTH)
         self.rect.y = 0
         self.vel = random.randrange(4, 5)
+        self.score = score
 
     def update_position(self):
         self.rect.y += self.vel
@@ -98,30 +118,33 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 all_sprites_list = pygame.sprite.Group()
 coin_list = pygame.sprite.Group()
 
-player = Player([100, 600], 7)
+player = Player("img/basket.jpg", [100, 600], 7)
 all_sprites_list.add(player)
 score = 0
+time = 0
 
 while True:
-    pygame.time.delay(10)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
 
-    generate_rand_move_block(1)
+
+    time += 1
+    time = generate_rand_falling_block(1, time)
 
     player.update_position()
     for coin in coin_list:
         coin.update_position()
-        if coin.rect.y > SCREEN_HEIGHT - 10:
+        if coin.rect.y > SCREEN_HEIGHT - 40:
             coin_list.remove(coin)
             all_sprites_list.remove(coin)
 
     blocks_hit_list = pygame.sprite.spritecollide(player, coin_list, True)
 
     for block in blocks_hit_list:
-        score += 1
+
+        score += block.score
         print("Your scores: %s." % score)
 
     draw_screen()
