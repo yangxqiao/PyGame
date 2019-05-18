@@ -1,7 +1,9 @@
 import pygame
 import random
+import sys
 
 pygame.init()
+my_font = pygame.font.SysFont("serif", 32)
 
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 700
@@ -13,6 +15,10 @@ RED = (255, 0, 0)
 def draw_screen():
     screen.fill(WHITE)
     all_sprites_list.draw(screen)
+
+    score_text = my_font.render("Score: {0}".format(score), 3, (0,0,0))
+    screen.blit(score_text, (5, 10))
+
     pygame.display.flip()
 
 
@@ -92,17 +98,16 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 all_sprites_list = pygame.sprite.Group()
 coin_list = pygame.sprite.Group()
 
-player = Player([100, 630], 7)
+player = Player([100, 600], 7)
 all_sprites_list.add(player)
 score = 0
 
-done = False
-while not done:
+while True:
     pygame.time.delay(10)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            done = True
+            sys.exit()
 
     generate_rand_move_block(1)
 
@@ -120,5 +125,3 @@ while not done:
         print("Your scores: %s." % score)
 
     draw_screen()
-
-pygame.quit()
