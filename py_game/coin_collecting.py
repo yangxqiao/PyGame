@@ -3,8 +3,8 @@ import random
 
 pygame.init()
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 800
+SCREEN_WIDTH = 700
+SCREEN_HEIGHT = 700
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -16,36 +16,25 @@ def draw_screen():
     pygame.display.flip()
 
 
-def generate_rand_move_block(num, block_width, block_height, vel=3):
+def generate_rand_move_block(num):
 
     for i in range(num):
-        block = FallingCoin(BLACK, block_width, block_height, vel)
+        block = FallingCoin()
 
         coin_list.add(block)
         all_sprites_list.add(block)
 
 
-class Block(pygame.sprite.Sprite):
+class Player(pygame.sprite.Sprite):
 
-    def __init__(self, color, width, height):
+    def __init__(self, pos, vel):
         super().__init__()
 
-        self.color = color
-        self.width = width
-        self.height = height
-
-        self.image = pygame.Surface([width, height])
-        self.image.fill(color)
+        self.image = pygame.image.load("img/basket.jpg").convert()
+        self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
 
-    def update_position(self):
-        raise NotImplementedError("This function is meant to be implemented in the subclass")
-
-
-class Player(Block):
-
-    def __init__(self, color, width, height, pos, vel):
-        Block.__init__(self, color, width, height)
+        self.rect = self.image.get_rect()
 
         self.pos = pos
         self.rect.x = pos[0]
@@ -62,7 +51,7 @@ class Player(Block):
         if keys[pygame.K_LEFT] and self.rect.x > self.vel:
             self.rect.x -= self.vel
 
-        if keys[pygame.K_RIGHT] and self.rect.x < SCREEN_WIDTH - self.width - self.vel:
+        if keys[pygame.K_RIGHT] and self.rect.x < SCREEN_WIDTH - self.rect.width - self.vel:
             self.rect.x += self.vel
 
         if self.not_jump:
@@ -83,14 +72,17 @@ class Player(Block):
                 self.jump_count = 10
 
 
-class FallingCoin(Block):
+class FallingCoin(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
 
-    def __init__(self, color, width, height, vel):
-        Block.__init__(self, color, width, height)
+        self.image = pygame.image.load("img/coin.jpg").convert()
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
 
         self.rect.x = random.randrange(SCREEN_WIDTH)
         self.rect.y = 0
-        self.vel = vel
+        self.vel = random.randrange(4, 5)
 
     def update_position(self):
         self.rect.y += self.vel
@@ -100,7 +92,7 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 all_sprites_list = pygame.sprite.Group()
 coin_list = pygame.sprite.Group()
 
-player = Player(RED, 40, 40, [100, 750], 7)
+player = Player([100, 630], 7)
 all_sprites_list.add(player)
 score = 0
 
@@ -112,7 +104,7 @@ while not done:
         if event.type == pygame.QUIT:
             done = True
 
-    generate_rand_move_block(1, 15, 15, 5)
+    generate_rand_move_block(1)
 
     player.update_position()
     for coin in coin_list:
