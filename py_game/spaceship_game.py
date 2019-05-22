@@ -18,6 +18,8 @@ pygame.display.set_caption("Spaceship Game")
 def draw_screen():
     screen.fill(WHITE)
     all_sprites_list.draw(screen)
+    pygame.draw.rect(screen, (255, 0, 0), (player.rect.x, player.rect.y - 20, 50, 8))
+    pygame.draw.rect(screen, (0, 128, 0), (player.rect.x, player.rect.y - 20, 50 - (5 * (10 - player.health)), 8))
     score_text = my_font.render("Score: {0}".format(score), 3, (0, 0, 0))
     screen.blit(score_text, (5, 10))
     pygame.display.flip()
@@ -66,24 +68,34 @@ class Player(Block):
         self.vel = vel
         self.rect.x = pos[0]
         self.rect.y = pos[1]
+        self.health = 10
+        self.visible = True
 
     def update_position(self):
+            self.collide()
+            keys = pygame.key.get_pressed()
 
-        keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT] and self.rect.x > self.vel:
+                self.rect.x -= self.vel
 
-        if keys[pygame.K_LEFT] and self.rect.x > self.vel:
-            self.rect.x -= self.vel
-            # self.image = pygame.transform.rotate(self.image, 15)
+            if keys[pygame.K_RIGHT] and self.rect.x < SCREEN_WIDTH - self.width - self.vel:
+                self.rect.x += self.vel
 
-        if keys[pygame.K_RIGHT] and self.rect.x < SCREEN_WIDTH - self.width - self.vel:
-            self.rect.x += self.vel
-            # self.image = pygame.transform.rotate(self.image, -15)
+            if keys[pygame.K_UP] and self.rect.y > self.vel:
+                self.rect.y -= self.vel
 
-        if keys[pygame.K_UP] and self.rect.y > self.vel:
-            self.rect.y -= self.vel
+            if keys[pygame.K_DOWN] and self.rect.y < SCREEN_HEIGHT - self.height - self.vel:
+                self.rect.y += self.vel
 
-        if keys[pygame.K_DOWN] and self.rect.y < SCREEN_HEIGHT - self.height - self.vel:
-            self.rect.y += self.vel
+    def collide(self):
+        blocks_hit_list = pygame.sprite.spritecollide(self, enemy_list, True)
+
+        for _ in blocks_hit_list:
+            if self.health > 0:
+                self.health -= 1
+            else:
+                self.visible = False
+            print('hit')
 
 
 class Enemy(Block):
@@ -144,15 +156,9 @@ while not done:
             all_sprites_list.add(bullet)
             bullet_list.add(bullet)
 
-    # keys = pygame.key.get_pressed()
-    # if keys[pygame.K_SPACE]:
-    #     bullet = Bullet(BLACK, bullet_width, bullet_height, bullet_vel)
-    #
-    #     bullet.rect.x = player.rect.x
-    #     bullet.rect.y = player.rect.y
-    #
-    #     all_sprites_list.add(bullet)
-    #     bullet_list.add(bullet)
+        elif player.visible is False:
+            done = True
+
     if time_loop == 20:
         generate_enemy(3)
         time_loop = 0
