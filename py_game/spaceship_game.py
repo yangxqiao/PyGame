@@ -9,18 +9,20 @@ BLUE = (0, 0, 255)
 pygame.init()
 
 SCREEN_WIDTH = 700
-SCREEN_HEIGHT = 400
+SCREEN_HEIGHT = 700
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 my_font = pygame.font.SysFont("serif", 32)
 pygame.display.set_caption("Spaceship Game")
+background = pygame.image.load('img/starry_night.jpg')
 
 
 def draw_screen():
     screen.fill(WHITE)
+    screen.blit(background, (0,0))
     all_sprites_list.draw(screen)
     pygame.draw.rect(screen, (255, 0, 0), (player.rect.x, player.rect.y - 20, 50, 8))
     pygame.draw.rect(screen, (0, 128, 0), (player.rect.x, player.rect.y - 20, 50 - (5 * (10 - player.health)), 8))
-    score_text = my_font.render("Score: {0}".format(score), 3, (0, 0, 0))
+    score_text = my_font.render("Score: {0}".format(score), 3, WHITE)
     screen.blit(score_text, (5, 10))
     pygame.display.flip()
 
@@ -29,7 +31,7 @@ def generate_enemy(num):
 
     for i in range(num):
 
-        enemy = Enemy(BLUE, enemy_width, enemy_height)
+        enemy = Enemy("img/ET.png")
         if i % 3 == 0:
             enemy.rect.x = 0
             enemy.rect.y = random.randrange(SCREEN_HEIGHT)
@@ -46,15 +48,11 @@ def generate_enemy(num):
 
 class Block(pygame.sprite.Sprite):
 
-    def __init__(self, color, width, height):
+    def __init__(self, image):
         super().__init__()
 
-        self.color = color
-        self.width = width
-        self.height = height
-
-        self.image = pygame.Surface([self.width, self.height])
-        self.image.fill(self.color)
+        self.image = pygame.image.load(image).convert()
+        self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
 
     def update_position(self):
@@ -63,8 +61,8 @@ class Block(pygame.sprite.Sprite):
 
 class Player(Block):
 
-    def __init__(self, color, width, height, vel, pos):
-        Block.__init__(self, color, width, height)
+    def __init__(self, image, vel, pos):
+        Block.__init__(self, image)
         self.vel = vel
         self.rect.x = pos[0]
         self.rect.y = pos[1]
@@ -78,13 +76,13 @@ class Player(Block):
             if keys[pygame.K_LEFT] and self.rect.x > self.vel:
                 self.rect.x -= self.vel
 
-            if keys[pygame.K_RIGHT] and self.rect.x < SCREEN_WIDTH - self.width - self.vel:
+            if keys[pygame.K_RIGHT] and self.rect.x < SCREEN_WIDTH - self.rect.width - self.vel:
                 self.rect.x += self.vel
 
             if keys[pygame.K_UP] and self.rect.y > self.vel:
                 self.rect.y -= self.vel
 
-            if keys[pygame.K_DOWN] and self.rect.y < SCREEN_HEIGHT - self.height - self.vel:
+            if keys[pygame.K_DOWN] and self.rect.y < SCREEN_HEIGHT - self.rect.height - self.vel:
                 self.rect.y += self.vel
 
     def collide(self):
@@ -100,8 +98,8 @@ class Player(Block):
 
 class Enemy(Block):
 
-    def __init__(self, color, width, height):
-        Block.__init__(self, color, width, height)
+    def __init__(self, image):
+        Block.__init__(self, image)
         self.vel = pygame.math.Vector2(2, 3).rotate(random.randrange(360))
 
     def update_position(self):
@@ -109,11 +107,19 @@ class Enemy(Block):
         self.rect.y += self.vel[1]
 
 
-class Bullet(Block):
+class Bullet(pygame.sprite.Sprite):
 
     def __init__(self, color, width, height, vel, player):
-        Block.__init__(self, color, width, height)
+        super().__init__()
+        self.color = color
+        self.width = width
+        self.height = height
         self.vel = vel
+
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(self.color)
+        self.rect = self.image.get_rect()
+
         self.rect.x = player.rect.x
         self.rect.y = player.rect.y
 
@@ -135,7 +141,7 @@ player_vel = 5
 enemy_vel = 4
 bullet_vel = 3
 
-player = Player(RED, player_width, player_height, player_vel, [0, 370])
+player = Player("img/spaceship.png", player_vel, [0, 370])
 all_sprites_list.add(player)
 
 clock = pygame.time.Clock()
@@ -151,7 +157,7 @@ while not done:
             done = True
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            bullet = Bullet(BLACK, bullet_width, bullet_height, bullet_vel, player)
+            bullet = Bullet(WHITE, bullet_width, bullet_height, bullet_vel, player)
 
             all_sprites_list.add(bullet)
             bullet_list.add(bullet)
