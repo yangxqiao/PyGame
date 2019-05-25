@@ -273,8 +273,8 @@ def game_loop():
                 all_sprites_list.add(bullet)
                 bullet_list.add(bullet)
 
-                mouse = pygame.mouse.get_pos()
-                explosion(mouse[0], mouse[1])
+                # mouse = pygame.mouse.get_pos()
+                # explosion(mouse[0], mouse[1])
 
         last_record_time = generate_enemy_every_interval(9, last_record_time, interval)
 
