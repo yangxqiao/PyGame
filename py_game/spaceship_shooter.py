@@ -83,18 +83,18 @@ class Asteroid(Block):
             self.kill()
 
 
-class Bullet(pygame.sprite.Sprite):
+class Bullet(Block):
 
-    def __init__(self, color, width, height, player):
-        super().__init__()
+    def __init__(self, image, player):
+        Block.__init__(self, image)
         self.vel = Vector2(0, -5)
 
-        self.image = pygame.Surface([width, height])
-        self.image.fill(color)
-        self.rect = self.image.get_rect()
-
         self.rect.x = player.rect.x + player.width / 2
-        self.rect.y = player.rect.y + player.height / 2
+        self.rect.y = player.rect.y
+        self.original_image = self.image
+        self.image = pygame.transform.rotate(self.original_image, -player.angle)
+        self.image = self.image.convert_alpha()
+
         self.vel.rotate_ip(player.angle)
 
     def update_position(self):
@@ -200,7 +200,7 @@ class SpaceshipShooter:
                     elif event.key == pygame.K_RIGHT:
                         player.angle_speed = 0
                     elif event.key == pygame.K_SPACE:
-                        bullet = Bullet(WHITE, 4, 10, self.player)
+                        bullet = Bullet("img/bullet.png", self.player)
                         self.all_sprites_list.add(bullet)
                         self.bullet_list.add(bullet)
 
