@@ -1,6 +1,7 @@
 import pygame
 from pygame.math import Vector2
 import random
+import numpy as np
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -57,21 +58,45 @@ class Player(Block):
 
 class Asteroid(Block):
 
-    def __init__(self, image, side):
+    def __init__(self, image, turn):
         Block.__init__(self, image)
         self.vel = Vector2(3, 3)
 
-        if side % 3 == 0:
+        if turn == 0 or turn == 17:
             self.rect.x = 0
-            self.rect.y = random.randrange(SCREEN_HEIGHT)
+            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT - SCREEN_HEIGHT/4, scale=70)[0]
             self.vel.rotate_ip(random.randrange(-45, 45))
-        elif side % 3 == 1:
-            self.rect.x = random.randrange(SCREEN_WIDTH)
+        elif turn == 1 or turn == 16:
+            self.rect.x = 0
+            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT/2, scale=70)[0]
+            self.vel.rotate_ip(random.randrange(-45, 45))
+        elif turn == 2 or turn == 15:
+            self.rect.x = 0
+            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT/4, scale=70)[0]
+            self.vel.rotate_ip(random.randrange(-45, 45))
+        elif turn == 3 or turn == 14:
+            self.rect.x = np.random.normal(size=1, loc=SCREEN_WIDTH/4, scale=70)[0]
             self.rect.y = 0
             self.vel.rotate_ip(random.randrange(0, 90))
-        elif side % 3 == 2:
+        elif turn == 4 or turn == 13:
+            self.rect.x = np.random.normal(size=1, loc=SCREEN_WIDTH/2, scale=70)[0]
+            self.rect.y = 0
+            self.vel.rotate_ip(random.randrange(0, 90))
+        elif turn == 5 or turn == 12:
+            self.rect.x = np.random.normal(size=1, loc=SCREEN_WIDTH - SCREEN_WIDTH/4, scale=70)[0]
+            self.rect.y = 0
+            self.vel.rotate_ip(random.randrange(0, 90))
+        elif turn == 6 or turn == 11:
             self.rect.x = SCREEN_WIDTH
-            self.rect.y = random.randrange(SCREEN_HEIGHT)
+            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT/4, scale=70)[0]
+            self.vel.rotate_ip(random.randrange(45, 135))
+        elif turn == 7 or turn == 10:
+            self.rect.x = SCREEN_WIDTH
+            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT/2, scale=70)[0]
+            self.vel.rotate_ip(random.randrange(45, 135))
+        elif turn == 8 or turn == 9:
+            self.rect.x = SCREEN_WIDTH
+            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT - SCREEN_HEIGHT/4, scale=70)[0]
             self.vel.rotate_ip(random.randrange(45, 135))
 
     def update_position(self):
@@ -90,7 +115,7 @@ class Bullet(Block):
         self.vel = Vector2(0, -5)
 
         self.rect.x = player.rect.x + player.width / 2
-        self.rect.y = player.rect.y
+        self.rect.y = player.rect.y + player.height / 2
         self.original_image = self.image
         self.image = pygame.transform.rotate(self.original_image, -player.angle)
         self.image = self.image.convert_alpha()
@@ -116,10 +141,10 @@ clock = pygame.time.Clock()
 
 class SpaceshipShooter:
 
-    def __init__(self, player, all_sprites_list, aliens_list, bullet_list):
+    def __init__(self, player, all_sprites_list, asteroid_list, bullet_list):
         self.player = player
         self.all_sprites_list = all_sprites_list
-        self.aliens_list = aliens_list
+        self.asteroid_list = asteroid_list
         self.bullet_list = bullet_list
         self.score = 0
 
@@ -135,31 +160,36 @@ class SpaceshipShooter:
 
         pygame.display.flip()
 
-    def generate_aliens_every_interval(self, num, last_record_time, interval):
+    def generate_asteroids_every_interval(self, turn, num, last_record_time, interval):
 
         curr_record_time = pygame.time.get_ticks()
         if curr_record_time - last_record_time >= interval:
 
             for i in range(num):
-                alien = Asteroid("img/asteroid.png", i)
-                self.aliens_list.add(alien)
-                self.all_sprites_list.add(alien)
+                asteroid = Asteroid("img/asteroid.png", turn)
+                self.asteroid_list.add(asteroid)
+                self.all_sprites_list.add(asteroid)
 
-            return curr_record_time
-        return last_record_time
+            turn = turn + 1
+            if turn > 17:
+                turn = 0
+
+            return turn, curr_record_time
+        return turn, last_record_time
 
     def check_hit_update_score(self):
 
         for bullet in self.bullet_list:
 
-            alien_hit_list = pygame.sprite.spritecollide(bullet, self.aliens_list, True)
+            asteroid_hit_list = pygame.sprite.spritecollide(bullet, self.asteroid_list, True)
 
-            for alien in alien_hit_list:
-                expl = ExplosionEffect((alien.rect.x + alien.width/2, alien.rect.y + alien.height/2))
+            for asteroid in asteroid_hit_list:
+                expl = ExplosionEffect((asteroid.rect.x + asteroid.width / 2, asteroid.rect.y + asteroid.height / 2))
                 self.all_sprites_list.add(expl)
                 explosion.add(expl)
-                self.all_sprites_list.remove(alien)
+                self.all_sprites_list.remove(asteroid)
                 self.all_sprites_list.remove(bullet)
+                self.bullet_list.remove(bullet)
 
                 self.score += 1
                 print(self.score)
@@ -170,8 +200,8 @@ class SpaceshipShooter:
         for bullet in self.bullet_list:
             bullet.update_position()
 
-        for alien in self.aliens_list:
-            alien.update_position()
+        for asteroid in self.asteroid_list:
+            asteroid.update_position()
 
         for expl in explosion:
             expl.update()
@@ -179,8 +209,8 @@ class SpaceshipShooter:
     def spaceship_game_loop(self):
 
         last_record_time = pygame.time.get_ticks()
-        interval = 5000
-
+        interval = 4500
+        turn = 0
         done = False
         while not done:
 
@@ -190,9 +220,11 @@ class SpaceshipShooter:
 
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        player.angle_speed = -10
+                        if player.angle > -90:
+                            player.angle_speed = -10
                     elif event.key == pygame.K_RIGHT:
-                        player.angle_speed = 10
+                        if player.angle < 90:
+                            player.angle_speed = 10
 
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
@@ -204,12 +236,12 @@ class SpaceshipShooter:
                         self.all_sprites_list.add(bullet)
                         self.bullet_list.add(bullet)
 
-            last_record_time = self.generate_aliens_every_interval(9, last_record_time, interval)
+            turn, last_record_time = self.generate_asteroids_every_interval(turn, 6, last_record_time, interval)
 
             self.check_hit_update_score()
 
-            if self.score > 20:
-                quit_game()
+            # if self.score > 20:
+            #     quit_game()
 
             self.update_all_sprites()
 
@@ -348,13 +380,13 @@ def menu():
 
 
 all_sprites_list = pygame.sprite.Group()
-aliens_list = pygame.sprite.Group()
+asteroid_list = pygame.sprite.Group()
 bullet_list = pygame.sprite.Group()
 explosion = pygame.sprite.Group()
 
-player = Player("img/spaceship2.png", (350, 620))
+player = Player("img/spaceship2.png", (350, 650))
 all_sprites_list.add(player)
-space_shooter = SpaceshipShooter(player, all_sprites_list, aliens_list, bullet_list)
+space_shooter = SpaceshipShooter(player, all_sprites_list, asteroid_list, bullet_list)
 
 
 play = menu()
