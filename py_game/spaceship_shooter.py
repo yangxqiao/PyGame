@@ -2,6 +2,7 @@ import pygame
 from pygame.math import Vector2
 import random
 import numpy as np
+import math
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -42,7 +43,7 @@ class Player(Block):
         self.original_image = self.image
         self.pos = Vector2(position)
         self.direction = Vector2(90, 0)
-        self.angle = 0
+        self.angle = 90
         self.angle_speed = 0
 
     def update_position(self):
@@ -51,7 +52,7 @@ class Player(Block):
 
             self.angle += self.angle_speed
             self.direction.rotate_ip(self.angle_speed)
-            self.image = pygame.transform.rotate(self.original_image, -self.angle)
+            self.image = pygame.transform.rotate(self.original_image, self.angle - 90)
             self.image = self.image.convert_alpha()
             self.rect = self.image.get_rect(center=self.rect.center)
 
@@ -137,6 +138,7 @@ my_font = pygame.font.SysFont("serif", 32)
 pygame.display.set_caption("Spaceship Game")
 background = pygame.image.load('img/starry_night.jpg')
 clock = pygame.time.Clock()
+radius = math.sqrt((SCREEN_WIDTH/2)**2 + SCREEN_HEIGHT**2)
 
 
 class SpaceshipShooter:
@@ -220,11 +222,14 @@ class SpaceshipShooter:
 
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        if player.angle > -90:
-                            player.angle_speed = -10
-                    elif event.key == pygame.K_RIGHT:
-                        if player.angle < 90:
+                        if player.angle < 180:
                             player.angle_speed = 10
+                            print(player.angle)
+
+                    elif event.key == pygame.K_RIGHT:
+                        if player.angle > 0:
+                            player.angle_speed = -10
+                            print(player.angle)
 
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_LEFT:
@@ -395,3 +400,13 @@ if play:
     space_shooter.spaceship_game_loop()
 else:
     quit_game()
+
+
+def generate_asteroid(radius, angle, SCREEN_WIDTH, SCREEN_HEIGHT):
+    x = radius * math.cos(math.radians(angle))
+    y = radius * math.sin(math.radians(angle))
+
+    x = min(x, SCREEN_WIDTH/2)
+    y = min(y, SCREEN_HEIGHT)
+
+    return x, y
