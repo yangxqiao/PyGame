@@ -59,46 +59,12 @@ class Player(Block):
 
 class Asteroid(Block):
 
-    def __init__(self, image, turn):
+    def __init__(self, image, x, y):
         Block.__init__(self, image)
         self.vel = Vector2(3, 3)
-
-        if turn == 0 or turn == 17:
-            self.rect.x = 0
-            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT - SCREEN_HEIGHT/4, scale=70)[0]
-            self.vel.rotate_ip(random.randrange(-45, 45))
-        elif turn == 1 or turn == 16:
-            self.rect.x = 0
-            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT/2, scale=70)[0]
-            self.vel.rotate_ip(random.randrange(-45, 45))
-        elif turn == 2 or turn == 15:
-            self.rect.x = 0
-            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT/4, scale=70)[0]
-            self.vel.rotate_ip(random.randrange(-45, 45))
-        elif turn == 3 or turn == 14:
-            self.rect.x = np.random.normal(size=1, loc=SCREEN_WIDTH/4, scale=70)[0]
-            self.rect.y = 0
-            self.vel.rotate_ip(random.randrange(0, 90))
-        elif turn == 4 or turn == 13:
-            self.rect.x = np.random.normal(size=1, loc=SCREEN_WIDTH/2, scale=70)[0]
-            self.rect.y = 0
-            self.vel.rotate_ip(random.randrange(0, 90))
-        elif turn == 5 or turn == 12:
-            self.rect.x = np.random.normal(size=1, loc=SCREEN_WIDTH - SCREEN_WIDTH/4, scale=70)[0]
-            self.rect.y = 0
-            self.vel.rotate_ip(random.randrange(0, 90))
-        elif turn == 6 or turn == 11:
-            self.rect.x = SCREEN_WIDTH
-            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT/4, scale=70)[0]
-            self.vel.rotate_ip(random.randrange(45, 135))
-        elif turn == 7 or turn == 10:
-            self.rect.x = SCREEN_WIDTH
-            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT/2, scale=70)[0]
-            self.vel.rotate_ip(random.randrange(45, 135))
-        elif turn == 8 or turn == 9:
-            self.rect.x = SCREEN_WIDTH
-            self.rect.y = np.random.normal(size=1, loc=SCREEN_HEIGHT - SCREEN_HEIGHT/4, scale=70)[0]
-            self.vel.rotate_ip(random.randrange(45, 135))
+        self.rect.x = x
+        self.rect.y = y
+        self.vel.rotate_ip(random.randrange(0, 360))
 
     def update_position(self):
         self.rect.x += self.vel[0]
@@ -118,10 +84,10 @@ class Bullet(Block):
         self.rect.x = player.rect.x + player.width / 2
         self.rect.y = player.rect.y + player.height / 2
         self.original_image = self.image
-        self.image = pygame.transform.rotate(self.original_image, -player.angle)
+        self.image = pygame.transform.rotate(self.original_image, player.angle - 90)
         self.image = self.image.convert_alpha()
 
-        self.vel.rotate_ip(player.angle)
+        self.vel.rotate_ip(-player.angle + 90)
 
     def update_position(self):
         self.rect.x += self.vel[0]
@@ -162,22 +128,28 @@ class SpaceshipShooter:
 
         pygame.display.flip()
 
-    def generate_asteroids_every_interval(self, turn, num, last_record_time, interval):
+    def generate_asteroids_every_interval(self, radius, angle, num, last_record_time, interval):
 
         curr_record_time = pygame.time.get_ticks()
         if curr_record_time - last_record_time >= interval:
 
             for i in range(num):
-                asteroid = Asteroid("img/asteroid.png", turn)
+                x = np.random.normal(size=1, loc=radius * math.cos(math.radians(angle)), scale=70)
+                y = np.random.normal(size=1, loc=radius * math.sin(math.radians(angle)), scale=70)
+
+                if x >= 0:
+                    x = min(x, SCREEN_WIDTH / 2) + SCREEN_WIDTH / 2
+                else:
+                    x = max(x, -SCREEN_WIDTH / 2) + SCREEN_WIDTH / 2
+
+                y = SCREEN_HEIGHT - min(y, SCREEN_HEIGHT)
+
+                asteroid = Asteroid("img/asteroid.png", x, y)
                 self.asteroid_list.add(asteroid)
                 self.all_sprites_list.add(asteroid)
 
-            turn = turn + 1
-            if turn > 17:
-                turn = 0
-
-            return turn, curr_record_time
-        return turn, last_record_time
+            return curr_record_time
+        return last_record_time
 
     def check_hit_update_score(self):
 
@@ -211,8 +183,7 @@ class SpaceshipShooter:
     def spaceship_game_loop(self):
 
         last_record_time = pygame.time.get_ticks()
-        interval = 4500
-        turn = 0
+        interval = 3000
         done = False
         while not done:
 
@@ -241,7 +212,7 @@ class SpaceshipShooter:
                         self.all_sprites_list.add(bullet)
                         self.bullet_list.add(bullet)
 
-            turn, last_record_time = self.generate_asteroids_every_interval(turn, 6, last_record_time, interval)
+            last_record_time = self.generate_asteroids_every_interval(radius, player.angle, 10, last_record_time, interval)
 
             self.check_hit_update_score()
 
@@ -400,13 +371,3 @@ if play:
     space_shooter.spaceship_game_loop()
 else:
     quit_game()
-
-
-def generate_asteroid(radius, angle, SCREEN_WIDTH, SCREEN_HEIGHT):
-    x = radius * math.cos(math.radians(angle))
-    y = radius * math.sin(math.radians(angle))
-
-    x = min(x, SCREEN_WIDTH/2)
-    y = min(y, SCREEN_HEIGHT)
-
-    return x, y
